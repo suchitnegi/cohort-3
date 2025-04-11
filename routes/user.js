@@ -1,20 +1,53 @@
-const {Router} = require("express")
+const { Router } = require("express")
 const userRouter = Router();
+const { userModel } = require('../db')
+const bcrypt = require('bcrypt')
+const jwt = require('jsonwebtoken')
+const {JWT_USER_SECRET} = require('./../config')
 
-userRouter.post('/signup', function(req,res) {
+
+userRouter.post('/signup', async function (req, res) {
+
+    const { firstName, lastName, email, password } = req.body;
+    const alreadyExist = await userModel.findOne({ email: email })
+    if (alreadyExist) {
+        res.json({
+            message: "user already exist with this email"
+        })
+    }
+    bcrypt.hash(password, 2, async function (err, hash) {
+        await userModel.create({
+            firstName: firstName,
+            lastName: lastName,
+            email: email,
+            password: hash
+        })
+    });
+    console.log("user created")
+
     res.json(
         {
-            message: "signup endpoint"
+            message: "signup done"
         }
     )
 })
 
-userRouter.post('/signin', function (req, res) {
-    res.json(
-        {
-            message: "signin endpoint"
-        }
-    )
+userRouter.get('/signin', async function (req, res) {
+    const { email, password } = req.body;
+    const user = await userModel.findOne({ email: email })
+    if (!user) {
+        res.json({
+            message: "user not exsit with this email"
+        })
+    }
+    const match = await bcrypt.compare(password, user.password);
+    if (match) {
+        const token = jwt.sign({ userId: user._id }, JWT_USER_SECRET)
+        res.json({
+            message: "logged in",
+            token: token
+        })
+    }
 })
 userRouter.get('/purchases', function (req, res) {
     res.json(
