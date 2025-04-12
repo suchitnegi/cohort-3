@@ -1,9 +1,11 @@
 const { Router } = require("express")
 const userRouter = Router();
-const { userModel } = require('../db')
+const { userModel, courseModel, purchaseModel } = require('../db')
 const bcrypt = require('bcrypt')
 const jwt = require('jsonwebtoken')
-const {JWT_USER_SECRET} = require('./../config')
+const {JWT_USER_SECRET} = require('./../config');
+const { userMiddleware } = require("../middleware/user");
+const course = require("./course");
 
 
 userRouter.post('/signup', async function (req, res) {
@@ -23,7 +25,6 @@ userRouter.post('/signup', async function (req, res) {
             password: hash
         })
     });
-    console.log("user created")
 
     res.json(
         {
@@ -49,10 +50,19 @@ userRouter.get('/signin', async function (req, res) {
         })
     }
 })
-userRouter.get('/purchases', function (req, res) {
+userRouter.get('/purchases',userMiddleware,async function (req, res) {
+    const userId = req.userId;
+    const courses = await purchaseModel.find({
+        userId: userId
+    })
+    const courseDetail =await courseModel.find({_id: {
+        $in: courses.map(m => m.courseId)
+    }})
     res.json(
         {
-            message: "purchase endpoint"
+            message: "purchase endpoint",
+            courses: courses,
+            courseDetail: courseDetail
         }
     )
 })
