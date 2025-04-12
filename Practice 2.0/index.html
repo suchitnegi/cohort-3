@@ -1,0 +1,33 @@
+<html>
+    <style>
+        #mainDiv{
+            flex-direction: column;
+            display: flex;
+        }
+    </style>
+    <body>
+        <div id="mainDiv"></div>
+        <input type="text"></input>
+        <button onclick="addTodo()">
+           + add todo
+        </button>
+
+    <script>
+        let ctr = 0;
+        function delTodo(val){
+            const divEl = document.getElementById(val)
+            divEl.parentElement.removeChild(divEl);
+        }
+        function addTodo(){
+            const inputEl = document.querySelector('input');
+            const value = inputEl.value;
+            const newDiv = document.createElement("div");
+            newDiv.setAttribute('id',ctr)
+            newDiv.innerHTML = "<div>"+value+"</div><button onclick='delTodo("+ctr+")'>delete todo</button>"
+            ctr = ctr+1;
+            document.querySelector('#mainDiv').appendChild(newDiv)
+
+        }
+    </script>    
+    </body>
+</html>
