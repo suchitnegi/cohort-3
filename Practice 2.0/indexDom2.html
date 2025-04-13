@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html>
+<body>
+  <input type="string"></input>
+  <button onclick="addVal()">add todo</button>
+</body>
+<script>
+    let todo = [{title: "to eat"},{title: "to study"}];
+
+    function addData(){
+    for(let i = 0; i < todo.length; i++){
+        render(todo, i);
+    }}
+    function render(todo, val){
+        const divEl = document.createElement('div');
+        const spanEl = document.createElement('span');
+        const buttonEl = document.createElement('button');
+        spanEl.innerHTML = todo[val].title;
+        buttonEl.innerHTML = 'delete';
+        divEl.appendChild(spanEl);
+        divEl.appendChild(buttonEl);
+        // divEl.parentElement.appendChild(divEl);
+        document.querySelector('body').appendChild(divEl);
+    }
+    function addVal(){
+        console.log('click clik')
+        const strval = document.querySelector('input').value;
+        console.log('starval',strval)
+        todo.push({title: `${strval}`});
+        console.log({title: `${strval}`});
+        addData();
+    }
+</script>
+</html>
