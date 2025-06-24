@@ -1,0 +1,4 @@
+npm init -y
+npm install -d typescript
+npx tsc --init (for tsconfig.json)
+we can install express and later express with @types/express similarly for jsonwebtoken
