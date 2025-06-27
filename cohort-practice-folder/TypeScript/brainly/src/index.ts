@@ -14,7 +14,7 @@ app.post("/api/v1/signup",async (req,res)=>{
         email: req.body.email,
         password: req.body.password
     })
-    console.log("userData",userData)
+
     await userData.save();
     res.json({message: "done"});
 })
