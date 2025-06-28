@@ -13,30 +13,92 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
+const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const mongoose_1 = __importDefault(require("mongoose"));
-const db_1 = __importDefault(require("./db"));
+const db_1 = require("./db");
+const middleware_1 = require("./middleware");
+const bcrypt_1 = __importDefault(require("bcrypt"));
 const app = (0, express_1.default)();
 mongoose_1.default.connect('mongodb+srv://suchitnegi:47M7NzCvubjHxogX@100xdev.ijylxgs.mongodb.net/brainly');
 app.use(express_1.default.json());
 app.post("/api/v1/signup", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const userData = new db_1.default({
-        firstName: req.body.firstName,
-        lastName: req.body.lastName,
-        email: req.body.email,
-        password: req.body.password
+    const { firstName, lastName, email, password } = req.body;
+    const alreadyAccount = yield db_1.userModel.findOne({ email: email });
+    if (alreadyAccount) {
+        res.json({
+            message: "account already exist"
+        });
+    }
+    bcrypt_1.default.hash(password, 2, function (err, hash) {
+        return __awaiter(this, void 0, void 0, function* () {
+            yield db_1.userModel.create({
+                firstName: firstName,
+                lastName: lastName,
+                email: email,
+                password: hash
+            });
+        });
     });
-    console.log("userData", userData);
-    yield userData.save();
-    res.json({ message: "done" });
+    res.json({ message: "signup is done" });
 }));
-app.post("/api/v1/signin", (req, res) => {
-});
-app.post("/api/v1/content", (req, res) => {
-});
-app.get("/api/v1/content", (req, res) => {
-});
-app.delete("/api/v1/content", (req, res) => {
-});
+app.post("/api/v1/signin", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { email, password } = req.body;
+    const user = yield db_1.userModel.findOne({ email: email });
+    console.log("user", user);
+    if (!user) {
+        res.json({
+            message: "user not found"
+        });
+    }
+    let match = false;
+    if (user === null || user === void 0 ? void 0 : user.password) {
+        match = yield bcrypt_1.default.compare(password, user.password);
+    }
+    if (!match) {
+        res.json({ message: "password incorrect" });
+    }
+    const token = jsonwebtoken_1.default.sign({
+        email: email,
+        userId: user === null || user === void 0 ? void 0 : user._id,
+    }, 'secret', { expiresIn: '1h' });
+    res.json({
+        message: "login",
+        token: token
+    });
+}));
+app.post("/api/v1/content", middleware_1.middleware, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { title, link } = req.body;
+    yield db_1.contentModel.create({
+        title: title,
+        link: link,
+        //@ts-ignore
+        userId: req.userId,
+    });
+    res.json({
+        message: "content posted"
+    });
+}));
+app.get("/api/v1/content", middleware_1.middleware, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    // @ts-ignore
+    const userId = req.userId;
+    const content = yield db_1.contentModel.find({ userId: userId }).populate("userId", "firstName lastName");
+    res.json({
+        message: "content fetched",
+        content: content
+    });
+}));
+app.delete("/api/v1/content", middleware_1.middleware, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const contentId = req.query.contentId;
+    console.log("content id>>>>>", contentId);
+    yield db_1.contentModel.deleteMany({
+        contentId,
+        //@ts-ignore
+        userId: req.userId
+    });
+    res.json({
+        message: "deleted content"
+    });
+}));
 function main() {
     app.listen(9090);
     console.log("BE running in 9090");
