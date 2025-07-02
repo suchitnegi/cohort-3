@@ -1,10 +1,11 @@
 import express from 'express'
 import jwt from 'jsonwebtoken'
 import mongoose from 'mongoose'
-import { userModel, contentModel } from './db';
+import { userModel, contentModel, linkModel } from './db';
 import { middleware } from './middleware';
 
 import bcrypt from 'bcrypt';
+import { randomStringGenerator } from './utils';
 
 
 const app = express();
@@ -60,6 +61,7 @@ app.post("/api/v1/signin",async (req,res)=>{
 })
 app.post("/api/v1/content",middleware,async (req,res)=>{
     const {title, link} = req.body;
+
     await contentModel.create({
         title: title,
         link: link,
@@ -91,6 +93,59 @@ app.delete("/api/v1/content",middleware, async(req,res)=>{
 
     res.json({
         message: "deleted content"
+    })
+})
+app.post("/api/v1/brainly/share",middleware,async (req,res)=>{
+
+    const share= req.body.share;
+    if(share){
+        const hash = randomStringGenerator(10);
+        await linkModel.create({
+            hash: hash,
+             //@ts-ignore
+            userId: req.userId
+        })
+        res.json({
+            message: "/share/" + hash
+        })
+        return
+    }
+    else{
+        await linkModel.deleteOne({
+             //@ts-ignore
+            userId: req.userId
+        });
+
+        res.json({
+            message: "removed link"
+        })
+        return
+    }
+
+})
+app.delete("/api/v1/brainly/:shareLink",middleware, async(req,res)=>{
+   
+    const shareLink = req.params.shareLink;
+
+    const linkData = linkModel.findOne({
+        hash: shareLink
+    })
+
+    if(!linkData){
+        res.json({
+            message: "link not valid"
+        })
+        return
+    }
+    //@ts-ignore
+    const userId = linkData.userId;
+    const userContent = await contentModel.find({
+        userId: userId
+    })
+
+    res.json({
+        message: "constent fetch done",
+        content: userContent
     })
 })
 

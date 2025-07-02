@@ -18,6 +18,7 @@ const mongoose_1 = __importDefault(require("mongoose"));
 const db_1 = require("./db");
 const middleware_1 = require("./middleware");
 const bcrypt_1 = __importDefault(require("bcrypt"));
+const utils_1 = require("./utils");
 const app = (0, express_1.default)();
 mongoose_1.default.connect('mongodb+srv://suchitnegi:47M7NzCvubjHxogX@100xdev.ijylxgs.mongodb.net/brainly');
 app.use(express_1.default.json());
@@ -89,7 +90,43 @@ app.get("/api/v1/content", middleware_1.middleware, (req, res) => __awaiter(void
 }));
 app.delete("/api/v1/content", middleware_1.middleware, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const contentId = req.query.contentId;
-    console.log("content id>>>>>", contentId);
+    yield db_1.contentModel.deleteMany({
+        contentId,
+        //@ts-ignore
+        userId: req.userId
+    });
+    res.json({
+        message: "deleted content"
+    });
+}));
+app.post("/api/v1/brainly/share", middleware_1.middleware, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const share = req.body.share;
+    if (share) {
+        const hash = (0, utils_1.randomStringGenerator)(10);
+        yield db_1.linkModel.create({
+            hash: hash,
+            //@ts-ignore
+            userId: req.userId
+        });
+        res.json({
+            message: "/share/" + hash
+        });
+        return;
+    }
+    else {
+        yield db_1.linkModel.deleteOne({
+            //@ts-ignore
+            userId: req.userId
+        });
+        console.log("linked removed");
+        // res.json({
+        //     message: "removed link"
+        // })
+        return;
+    }
+}));
+app.delete("/api/v1/content", middleware_1.middleware, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const contentId = req.query.contentId;
     yield db_1.contentModel.deleteMany({
         contentId,
         //@ts-ignore
