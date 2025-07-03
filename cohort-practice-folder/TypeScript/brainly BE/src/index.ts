@@ -123,13 +123,15 @@ app.post("/api/v1/brainly/share",middleware,async (req,res)=>{
     }
 
 })
-app.delete("/api/v1/brainly/:shareLink",middleware, async(req,res)=>{
-   
+app.get("/api/v1/brainly/:shareLink",middleware, async(req,res)=>{
+
+    
     const shareLink = req.params.shareLink;
 
-    const linkData = linkModel.findOne({
+    const linkData = await linkModel.findOne({
         hash: shareLink
     })
+
 
     if(!linkData){
         res.json({
@@ -139,6 +141,7 @@ app.delete("/api/v1/brainly/:shareLink",middleware, async(req,res)=>{
     }
     //@ts-ignore
     const userId = linkData.userId;
+
     const userContent = await contentModel.find({
         userId: userId
     })

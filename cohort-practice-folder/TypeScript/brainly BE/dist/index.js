@@ -118,22 +118,31 @@ app.post("/api/v1/brainly/share", middleware_1.middleware, (req, res) => __await
             //@ts-ignore
             userId: req.userId
         });
-        console.log("linked removed");
-        // res.json({
-        //     message: "removed link"
-        // })
+        res.json({
+            message: "removed link"
+        });
         return;
     }
 }));
-app.delete("/api/v1/content", middleware_1.middleware, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const contentId = req.query.contentId;
-    yield db_1.contentModel.deleteMany({
-        contentId,
-        //@ts-ignore
-        userId: req.userId
+app.get("/api/v1/brainly/:shareLink", middleware_1.middleware, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const shareLink = req.params.shareLink;
+    const linkData = yield db_1.linkModel.findOne({
+        hash: shareLink
+    });
+    if (!linkData) {
+        res.json({
+            message: "link not valid"
+        });
+        return;
+    }
+    //@ts-ignore
+    const userId = linkData.userId;
+    const userContent = yield db_1.contentModel.find({
+        userId: userId
     });
     res.json({
-        message: "deleted content"
+        message: "constent fetch done",
+        content: userContent
     });
 }));
 function main() {
